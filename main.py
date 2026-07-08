@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from schemas import PostCreate, PostResponse
 
 app = FastAPI()
 
@@ -25,6 +26,23 @@ posts: list[dict] = [
         "content": "This is the content of the second post"
     }
 ]
+
+
+@app.get("/api/posts/{post_id}", response_model=PostResponse)
+def get_posts():
+    return posts
+
+@app.post("/api/posts",response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+def create_post(post : PostCreate):
+    new_id = max(p["id"] for p in posts) + 1 if posts else 1
+    new_post = {
+        "id" : new_id,
+        "title" : post.title,
+        "content" : post.content
+    }
+
+    posts.append(new_post)
+    return new_post
 
 @app.get("/", response_class=HTMLResponse, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
